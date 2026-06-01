@@ -1,62 +1,30 @@
-"""
-genetic_algorithm_hidden.py
-============================
-Genetic Algorithm (GA) for optimising real-valued neural network weights
-— **two hidden layers** variant.
-
-Changes from genetic_algorithm_c.py
--------------------------------------
-* Default `input_size`, `hidden_size`, `output_size` parameters in
-  `genetic_algorithm()` are replaced by `input_size`, `hidden1_size`,
-  `hidden2_size`, `output_size` to match the new architecture.
-* `xavier_initialisation()` now scales three layers instead of two:
-    Layer 1  (input   → hidden-1)  limit1 = √(6 / (input + h1))
-    Layer 2  (hidden-1 → hidden-2) limit2 = √(6 / (h1    + h2))   ← NEW
-    Layer 3  (hidden-2 → output)   limit3 = √(6 / (h2    + out))
-* All selection / crossover / mutation operators are **unchanged** —
-  they operate on the flat weight vector regardless of its length.
-* `n_params` is now 351 instead of 241; callers obtain it from
-  `parkinsons_hidden.compute_n_params()`.
-
-Everything else (population structure, elitism, verbose output,
-return signature) is identical to the original module so the rest of the
-project can use it as a drop-in replacement.
-"""
-
 import numpy as np
 from typing import Callable, List, Tuple, Optional
 
 
-# =====================================================
+
 # 1. POPULATION INITIALISATION
 
-
-def random_initialisation(pop_size: int, n_params: int) -> np.ndarray:
-    """Uniform random in [-1, 1].  Unchanged from original."""
+def random_initialisation(pop_size, n_params):
+    """Uniform random in [-1, 1]."""
     return np.random.uniform(-1.0, 1.0, size=(pop_size, n_params))
 
-
 def xavier_initialisation(
-    pop_size:     int,
-    n_params:     int,
-    input_size:   int,
-    hidden1_size: int,
-    hidden2_size: int,   # NEW — second hidden layer
-    output_size:  int,
-) -> np.ndarray:
+    pop_size,
+    n_params,
+    input_size,
+    hidden1_size,
+    hidden2_size,
+    output_size,
+):
     """
     Xavier initialisation for a **three-layer** network.
-
-    CHANGED: Three limit values are computed — one per weight matrix.
-
-        limit_l = sqrt(6 / (fan_in_l + fan_out_l))
-
     Biases are initialised to zero (standard practice).
     """
     population = np.zeros((pop_size, n_params))
     idx = 0
 
-    # --- Layer 1: W1 (input → hidden-1) + b1 ---
+    # Layer 1: W1 (input → hidden-1) + b1
     limit1 = np.sqrt(6.0 / (input_size + hidden1_size))
     n_W1   = input_size * hidden1_size
     n_b1   = hidden1_size
