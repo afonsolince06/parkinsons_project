@@ -59,7 +59,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from parkinsons_hidden import (
+from parkinsons_problem_c import (
     fitness_function,
     fitness_function_custom_act,
     evaluate_solution,
@@ -71,8 +71,8 @@ from parkinsons_hidden import (
     DEFAULT_HIDDEN2_SIZE,
     DEFAULT_OUTPUT_SIZE,
 )
-from genetic_algorithm_hidden import genetic_algorithm
-from pso_hidden import particle_swarm_optimisation
+from genetic_algorithm_c import genetic_algorithm
+from pso_c import particle_swarm_optimisation
 
 # ---------------------------------------------------------------------------
 # 0. Configuration
