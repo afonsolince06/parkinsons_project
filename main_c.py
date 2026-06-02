@@ -5,10 +5,9 @@ Experiment runner for the Parkinson's Disease MLP weight optimisation
 — two hidden layers variant (22 → 10 → 10 → 1).
 
 What's new in this version
----------------------------
-1. Standard vs Extended GA operators comparison
+---------------------9. Standard vs Alternative GA operators comparison
      Runs GA twice: once with standard operators (tournament + arithmetic +
-     gaussian) and once with extended operators (rank + two_point + adaptive).
+     gaussian) and once with alternative operators (roulette + blend + uniform).
      Results are printed side-by-side for easy comparison.
 
 2. Activation function combination examples
@@ -26,10 +25,10 @@ Architecture
     n_params = 351
 
 Operators tested
-    Selection : tournament (standard), rank (extended)
-    Crossover : arithmetic (standard), two_point (extended)
-    Mutation  : gaussian (standard),   adaptive (extended)
-    Init      : random (both)
+    Selection : tournament (standard), roulette (alternative)
+    Crossover : arithmetic (standard), blend (alternative)
+    Mutation  : gaussian (standard),   uniform (alternative)
+    Init      : random (both) random (both)
 
 Activation combinations tested
     Standard  : relu + relu (both layers)
@@ -59,7 +58,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from parkinsons_problem_c import (
+from my_parkinsons_problem import (
     fitness_function,
     fitness_function_custom_act,
     evaluate_solution,
@@ -187,12 +186,11 @@ all_run_records.append({
     **ga_std_metrics,
 })
 
-# ---------------------------------------------------------------------------
-# 3. GA — Extended operators
-#    selection: rank      |  crossover: two_point  |  mutation: adaptive
+# 3. GA — Alternative operators
+#    selection: roulette  |  crossover: blend        |  mutation: uniform
 # ---------------------------------------------------------------------------
 print("\n" + "─" * 68)
-print("  Running GA (Extended: rank + two_point + adaptive) …")
+print("  Running GA (Alternative: roulette + blend + uniform) …")
 print("─" * 68)
 
 t0 = time.perf_counter()
@@ -207,17 +205,12 @@ ga_ext_theta, ga_ext_fitness, ga_ext_history = genetic_algorithm(
     sigma           = 0.1,
     tournament_size = 3,
     elitism         = 2,
-    # ── Extended operators ─────────────────────────────────────────────
-    selection_method  = 'rank',         # rank-based: preserves diversity
-    crossover_method  = 'two_point',    # two-cut swap: respects weight blocks
-    mutation_method   = 'adaptive',     # σ adapts to stagnation
+    # ── Alternative operators ─────────────────────────────────────────────
+    selection_method  = 'roulette',     # roulette selection
+    crossover_method  = 'blend',        # blend crossover
+    mutation_method   = 'uniform',      # uniform mutation
     # ───────────────────────────────────────────────────────────────────
-    init_method          = 'random',
-    stagnation_threshold = 10,          # adaptive mutation: scale-up threshold
-    sigma_scale_up       = 2.0,         # multiply σ when stagnating
-    sigma_scale_down     = 0.5,         # multiply σ when improving
-    sigma_min            = 0.01,
-    sigma_max            = 1.0,
+    init_method       = 'random',
     input_size        = DEFAULT_INPUT_SIZE,
     hidden1_size      = DEFAULT_HIDDEN1_SIZE,
     hidden2_size      = DEFAULT_HIDDEN2_SIZE,
@@ -229,10 +222,10 @@ ga_ext_time    = time.perf_counter() - t0
 ga_ext_metrics = evaluate_solution(ga_ext_theta, X, y)
 
 all_run_records.append({
-    'variant'         : 'GA-extended',
-    'selection_method': 'rank',
-    'crossover_method': 'two_point',
-    'mutation_method' : 'adaptive',
+    'variant'         : 'GA-alternative',
+    'selection_method': 'roulette',
+    'crossover_method': 'blend',
+    'mutation_method' : 'uniform',
     'act_h1'          : 'relu',
     'act_h2'          : 'relu',
     'seed'            : SEED,
@@ -335,10 +328,10 @@ for act_h1, act_h2 in ACT_PAIRS:
         sigma           = 0.1,
         tournament_size = 3,
         elitism         = 2,
-        # Use extended operators for activation experiments
-        selection_method = 'rank',
-        crossover_method = 'two_point',
-        mutation_method  = 'adaptive',
+        # Use standard/basic operators for activation experiments
+        selection_method = 'tournament',
+        crossover_method = 'arithmetic',
+        mutation_method  = 'gaussian',
         init_method      = 'random',
         input_size       = DEFAULT_INPUT_SIZE,
         hidden1_size     = DEFAULT_HIDDEN1_SIZE,
@@ -362,10 +355,10 @@ for act_h1, act_h2 in ACT_PAIRS:
                         'history': hist_a, **m_a})
 
     all_run_records.append({
-        'variant'         : f'GA-ext-{act_h1}+{act_h2}',
-        'selection_method': 'rank',
-        'crossover_method': 'two_point',
-        'mutation_method' : 'adaptive',
+        'variant'         : f'GA-std-{act_h1}+{act_h2}',
+        'selection_method': 'tournament',
+        'crossover_method': 'arithmetic',
+        'mutation_method' : 'gaussian',
         'act_h1'          : act_h1,
         'act_h2'          : act_h2,
         'seed'            : SEED,
@@ -393,7 +386,7 @@ header = (f"\n{'=' * 68}\n"
           f"{'=' * 68}")
 
 rows = [
-    ("Metric",           "GA-std",                   "GA-ext",                   "PSO"),
+    ("Metric",           "GA-std",                   "GA-alt",                   "PSO"),
     ("-"*20,             "-"*18,                      "-"*18,                      "-"*18),
     ("Recall (fitness)",
      f"{ga_std_metrics['recall']:.4f}",
@@ -451,7 +444,7 @@ table_str = "\n".join(table_lines)
 print(table_str)
 
 # Activation combination summary
-print(f"\n  Activation Combination Results (GA-extended):")
+print(f"\n  Activation Combination Results (GA-standard):")
 print(f"  {'act_h1':<10} {'act_h2':<10} {'Recall':>8} {'F1':>8} {'Accuracy':>10}")
 print("  " + "-"*50)
 for r in act_results:
@@ -473,7 +466,7 @@ with open('results_summary_hidden.txt', 'w') as f:
                 f"{r['recall']:8.4f} {r['f1']:8.4f} {r['accuracy']:10.4f}\n")
     f.write("\nGA-standard best θ (first 20 values):\n")
     f.write(str(ga_std_theta[:20].round(6)) + "\n\n")
-    f.write("GA-extended best θ (first 20 values):\n")
+    f.write("GA-alternative best θ (first 20 values):\n")
     f.write(str(ga_ext_theta[:20].round(6)) + "\n\n")
     f.write("PSO best θ (first 20 values):\n")
     f.write(str(pso_theta[:20].round(6)) + "\n")
@@ -497,7 +490,7 @@ ax.set_facecolor('#ffffff')
 ax.plot(iterations, ga_std_history, color='#4A7CC3', lw=2,
         label='GA-standard (tournament+arithmetic+gaussian)', alpha=0.9)
 ax.plot(iterations, ga_ext_history, color='#E07B3A', lw=2,
-        label='GA-extended (rank+two_point+adaptive)', alpha=0.9)
+        label='GA-alternative (roulette+blend+uniform)', alpha=0.9)
 ax.plot(iterations, pso_history,    color='#3A9A5C', lw=2,
         label='PSO', alpha=0.9)
 
@@ -513,7 +506,7 @@ ax.axhline(y=baseline_recall, color='#999', lw=1, ls='--',
            label=f'All-positive baseline ({baseline_recall:.2f})')
 ax.set_xlabel('Iteration / Generation', fontsize=11)
 ax.set_ylabel('Best Fitness (Recall)', fontsize=11)
-ax.set_title('Convergence Curves\nGA-std vs GA-ext vs PSO',
+ax.set_title('Convergence Curves\nGA-std vs GA-alt vs PSO',
              fontsize=12, fontweight='bold')
 ax.legend(fontsize=8)
 ax.set_xlim(1, N_ITER); ax.set_ylim(0, 1.05)
@@ -532,7 +525,7 @@ pso_vals = [pso_metrics[k]    for k in ['recall', 'accuracy', 'precision', 'f1']
 x     = np.arange(len(metric_names))
 width = 0.25
 bars_std = ax2.bar(x - width,     std_vals, width, color='#4A7CC3', alpha=0.85, label='GA-std')
-bars_ext = ax2.bar(x,             ext_vals, width, color='#E07B3A', alpha=0.85, label='GA-ext')
+bars_ext = ax2.bar(x,             ext_vals, width, color='#E07B3A', alpha=0.85, label='GA-alt')
 bars_pso = ax2.bar(x + width,     pso_vals, width, color='#3A9A5C', alpha=0.85, label='PSO')
 
 for bars, color in [(bars_std, '#4A7CC3'), (bars_ext, '#E07B3A'), (bars_pso, '#3A9A5C')]:
@@ -543,7 +536,7 @@ for bars, color in [(bars_std, '#4A7CC3'), (bars_ext, '#E07B3A'), (bars_pso, '#3
 
 ax2.set_xticks(x); ax2.set_xticklabels(metric_names, fontsize=10)
 ax2.set_ylabel('Score', fontsize=11)
-ax2.set_title('Final Metrics\nGA-std vs GA-ext vs PSO',
+ax2.set_title('Final Metrics\nGA-std vs GA-alt vs PSO',
               fontsize=12, fontweight='bold')
 ax2.set_ylim(0, 1.18); ax2.legend(fontsize=9)
 ax2.grid(True, axis='y', alpha=0.3, ls=':')
@@ -576,7 +569,7 @@ for bar in bars_f:
 ax3.set_xticks(x_act)
 ax3.set_xticklabels(act_labels, fontsize=8, rotation=20, ha='right')
 ax3.set_ylabel('Score', fontsize=11)
-ax3.set_title('Activation Combinations\nRecall & F1 (GA-extended)',
+ax3.set_title('Activation Combinations\nRecall & F1 (GA-standard)',
               fontsize=12, fontweight='bold')
 ax3.set_ylim(0, 1.18); ax3.legend(fontsize=9)
 ax3.grid(True, axis='y', alpha=0.3, ls=':')

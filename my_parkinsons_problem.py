@@ -1,8 +1,4 @@
 """
-parkinsons_hidden.py
-====================
-Core problem definition for Parkinson's MLP weight optimisation.
-
 Architecture
     Input  →  Hidden-1  →  Hidden-2  →  Output
       22        10            10           1
@@ -16,173 +12,103 @@ Total parameters (default architecture):
     b3 :       1 =   1   (output   bias)
     Total       = 351 parameters
 
-Why Recall?
-    The dataset is imbalanced (147 Parkinson's vs 48 healthy) and the
-    clinical cost of a False Negative (missed diagnosis) far exceeds
-    a False Positive.  Both optimisers maximise recall.
+Fitness Metric: F1-Score
+    The primary fitness metric is F1-score.
 
-Activation Function Experiments (NEW)
-    sklearn's MLPClassifier applies the *same* activation to every hidden
-    layer; it does not support mixed activations natively.  To explore
-    per-layer combinations we bypass sklearn's forward pass entirely and
-    implement our own numpy forward pass inside fitness_function_custom_act.
-    Supported activations: 'relu', 'tanh', 'logistic', 'identity'.
+    CLINICAL NOTE: In a real diagnostic context, recall (sensitivity) is
+    the preferred metric because the cost of a False Negative (missed
+    Parkinson's diagnosis) far exceeds the cost of a False Positive.
+    However, pure recall optimisation tends to produce *degenerate*
+    solutions where the model predicts every sample as positive (recall=1.0,
+    but precision=0.0 and the model is clinically useless).
 
-    Why explore activation combinations?
-    • relu        → sparsity, fast training, vanishing-gradient resistant
-    • tanh        → zero-centred outputs, useful when features are standardised
-    • logistic    → smooth, historically popular for binary classification
-    • identity    → linear layer (useful as ablation / control)
-    Mixing activations per layer can capture different feature abstractions
-    at each depth, potentially improving generalisation.  The statistical
-    tests in utils_hidden.py will determine whether observed differences
-    are significant or merely noise.
+    F1-score (harmonic mean of precision and recall) penalises degenerate
+    solutions while still strongly rewarding high recall.  This produces
+    more meaningful convergence curves for visualisation and algorithm
+    comparison, which is the primary goal of this project.
+
+    All four algorithms (GA, PSO, DE, ABC) share the same fitness interface:
+        fitness_fn(solution, X, y) → float  [0, 1]
 """
-
+import random
 import numpy as np
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import (accuracy_score, recall_score,
                              precision_score, f1_score)
 
-# ---------------------------------------------------------------------------
-# Architecture defaults
-# ---------------------------------------------------------------------------
-DEFAULT_INPUT_SIZE   = 22
-DEFAULT_HIDDEN1_SIZE = 10
-DEFAULT_HIDDEN2_SIZE = 10
-DEFAULT_OUTPUT_SIZE  = 1
-
-# ---------------------------------------------------------------------------
-# Supported activation functions for the custom forward pass
-# ---------------------------------------------------------------------------
-SUPPORTED_ACTIVATIONS = ('relu', 'tanh', 'logistic', 'identity')
+input_size   = 22
+hidden_sizes = (10,10)
+output_size  = 1
 
 
-def compute_n_params(
-    input_size   = DEFAULT_INPUT_SIZE,
-    hidden1_size = DEFAULT_HIDDEN1_SIZE,
-    hidden2_size = DEFAULT_HIDDEN2_SIZE,
-    output_size  = DEFAULT_OUTPUT_SIZE,
-):
+def compute_n_params(input_size, hidden_sizes, output_size):
     """Return the total number of trainable parameters for the two-layer MLP."""
-    n_W1 = input_size   * hidden1_size   # 220
-    n_b1 = hidden1_size                  #  10
-    n_W2 = hidden1_size * hidden2_size   # 100
-    n_b2 = hidden2_size                  #  10
-    n_W3 = hidden2_size * output_size    #  10
-    n_b3 = output_size                   #   1
-    return n_W1 + n_b1 + n_W2 + n_b2 + n_W3 + n_b3  # 351 (default)
+    hidden1_size = hidden_sizes[0]
+    hidden2_size = hidden_sizes[1]
 
+    n_W1 = input_size * hidden1_size # 220
+    n_b1 = hidden1_size  #  10
+    n_W2 = hidden1_size * hidden2_size # 100
+    n_b2 = hidden2_size #  10
+    n_W3 = hidden2_size * output_size #  10
+    n_b3 = output_size #   1
+    return n_W1 + n_b1 + n_W2 + n_b2 + n_W3 + n_b3  # 351
 
 def generate_solution(n_params):
-    """Create a random weight vector θ ∈ [-1, 1]^n_params."""
-    return np.random.uniform(-1.0, 1.0, size=n_params)
+    return [random.uniform(-1.0, 1.0) for _ in range(n_params)]
+
+def take_matrix(solution, idx, rows, cols):
+    matrix = []
+
+    for i in range(rows):
+        row = []
+
+        for j in range(cols):
+            row.append(solution[idx])
+            idx += 1
+
+        matrix.append(row)
+
+    return matrix, idx
 
 
-# ---------------------------------------------------------------------------
-# Weight unpacking (shared by sklearn-based and custom forward-pass paths)
-# ---------------------------------------------------------------------------
-
-def _unpack_weights(solution, input_size, hidden1_size, hidden2_size,
-                    output_size):
-    """
-    Slice the flat weight vector θ into six arrays.
-
-    Layout: [ W1 | b1 | W2 | b2 | W3 | b3 ]
-    Returns: (coefs_list, intercepts_list)
-        coefs_list      = [W1, W2, W3]
-        intercepts_list = [b1, b2, b3]
-    """
+def _unpack_weights(solution, input_size, hidden_sizes, output_size):
     idx = 0
+    hidden1_size = hidden_sizes[0]
+    hidden2_size = hidden_sizes[1]
 
-    # W1 : input → hidden-1
-    nW1 = input_size * hidden1_size
-    W1  = solution[idx:idx + nW1].reshape(input_size, hidden1_size)
-    idx += nW1
-    b1  = solution[idx:idx + hidden1_size];   idx += hidden1_size
+    W1, idx = take_matrix(solution, idx, input_size, hidden1_size)
 
-    # W2 : hidden-1 → hidden-2
-    nW2 = hidden1_size * hidden2_size
-    W2  = solution[idx:idx + nW2].reshape(hidden1_size, hidden2_size)
-    idx += nW2
-    b2  = solution[idx:idx + hidden2_size];   idx += hidden2_size
+    b1 = solution[idx:idx + hidden1_size]
+    idx += hidden1_size
 
-    # W3 : hidden-2 → output
-    nW3 = hidden2_size * output_size
-    W3  = solution[idx:idx + nW3].reshape(hidden2_size, output_size)
-    idx += nW3
-    b3  = solution[idx:idx + output_size];    idx += output_size
+    W2, idx = take_matrix(solution, idx, hidden1_size, hidden2_size)
 
-    assert idx == len(solution), (
-        f"Weight unpacking mismatch: consumed {idx} of {len(solution)} params."
-    )
+    b2 = solution[idx:idx + hidden2_size]
+    idx += hidden2_size
+
+    W3, idx = take_matrix(solution, idx, hidden2_size, output_size)
+
+    b3 = solution[idx:idx + output_size]
+    idx += output_size
     return [W1, W2, W3], [b1, b2, b3]
 
-
-# ---------------------------------------------------------------------------
-# Activation function dispatcher (for custom forward pass)
-# ---------------------------------------------------------------------------
-
-def _apply_activation(z, name):
+def build_MLP(hidden_sizes, activation='relu', max_iter=1, warm_start=False):
     """
-    Apply a named activation function element-wise.
-
-    Parameters
-    ----------
-    z    : np.ndarray  — pre-activation values
-    name : str         — one of 'relu', 'tanh', 'logistic', 'identity'
-    """
-    if name == 'relu':
-        # ReLU: max(0, z)
-        # Good default: sparse activations, no vanishing gradient for positive z
-        return np.maximum(0.0, z)
-    elif name == 'tanh':
-        # Tanh: zero-centred output ∈ (-1,1), smooth gradients
-        return np.tanh(z)
-    elif name == 'logistic':
-        # Logistic (sigmoid): output ∈ (0,1), historically popular
-        return 1.0 / (1.0 + np.exp(-np.clip(z, -500, 500)))
-    elif name == 'identity':
-        # Identity (linear): no non-linearity; useful as ablation baseline
-        return z
-    else:
-        raise ValueError(
-            f"Unknown activation '{name}'. "
-            f"Choose from {SUPPORTED_ACTIVATIONS}."
-        )
-
-
-# ---------------------------------------------------------------------------
-# sklearn-based builder (uniform activation across both hidden layers)
-# ---------------------------------------------------------------------------
-
-def _build_clf(hidden1_size, hidden2_size, activation='relu'):
-    """
-    Build an MLPClassifier with two hidden layers and a uniform activation.
-
-    NOTE: sklearn applies the same activation to *all* hidden layers.
-    For per-layer activations, use the custom forward pass path
-    (fitness_function_custom_act / evaluate_solution_custom_act).
-
-    Parameters
-    ----------
-    hidden1_size : int  — neurons in layer 1
-    hidden2_size : int  — neurons in layer 2
-    activation   : str  — sklearn activation: 'relu', 'tanh', 'logistic',
-                          or 'identity'
+    Build an MLPClassifier with two hidden layers.
     """
     return MLPClassifier(
-        hidden_layer_sizes=(hidden1_size, hidden2_size),
-        activation=activation,   # ← uniform across both hidden layers
+        hidden_layer_sizes=hidden_sizes,
+        activation=activation,
         solver='sgd',
-        max_iter=1,
+        max_iter=max_iter,
+        warm_start=warm_start,
         random_state=42,
     )
 
-
 # ---------------------------------------------------------------------------
 # Custom forward pass  (supports per-layer activations)
-# ---------------------------------------------------------------------------
+
 
 def _forward_pass(X, coefs, intercepts, act_h1, act_h2):
     """
@@ -235,10 +161,13 @@ def fitness_function(
     activation   = 'relu',   # uniform activation for both hidden layers
 ):
     """
-    Evaluate weight vector θ → return RECALL (positive class).
+    Evaluate weight vector θ → return F1-SCORE (positive class).
 
     Uses sklearn's MLPClassifier with a *uniform* activation.
     For per-layer activations use fitness_function_custom_act().
+
+    Compatible with GA, PSO, DE, and ABC — all call:
+        fitness_fn(solution, X, y) → float in [0, 1]
 
     Steps
     -----
@@ -246,7 +175,7 @@ def fitness_function(
     2. Dummy .fit() on two rows to initialise internal bookkeeping.
     3. Overwrite coefs_ / intercepts_ with values from `solution`.
     4. Forward pass on real X → predictions.
-    5. Return recall_score(y, y_pred, pos_label=1).
+    5. Return f1_score(y, y_pred, pos_label=1).
     """
     clf = _build_clf(hidden1_size, hidden2_size, activation)
 
@@ -261,7 +190,13 @@ def fitness_function(
     )
 
     y_pred = clf.predict(X)
-    return recall_score(y, y_pred, pos_label=1, zero_division=0)
+    # PRIMARY FITNESS: F1-score (harmonic mean of precision and recall).
+    # CLINICAL NOTE: Recall would be preferred in practice (minimise false
+    # negatives), but pure recall maximisation leads to degenerate solutions
+    # (model predicts all samples as positive).  F1 prevents degeneracy while
+    # still strongly rewarding high recall, and produces more meaningful
+    # convergence curves for GA/PSO/DE/ABC comparison.
+    return f1_score(y, y_pred, pos_label=1, zero_division=0)
 
 
 # ---------------------------------------------------------------------------
@@ -280,7 +215,7 @@ def fitness_function_custom_act(
     act_h2       = 'relu',    # activation for hidden layer 2
 ):
     """
-    Evaluate weight vector θ → return RECALL using a *custom* numpy forward
+    Evaluate weight vector θ → return F1-SCORE using a *custom* numpy forward
     pass that supports different activations per hidden layer.
 
     Why this matters
@@ -290,20 +225,15 @@ def fitness_function_custom_act(
     unpacks θ into weight matrices and runs the forward pass manually,
     enabling combinations like relu→tanh or tanh→logistic.
 
-    Expected impact of activation combinations
-    -------------------------------------------
-    relu  + relu    : standard baseline, fast convergence
-    relu  + tanh    : wide hidden-1 features, compressed hidden-2 output
-    tanh  + relu    : zero-centred first layer, sparse second
-    tanh  + tanh    : smooth, zero-centred throughout; may help on standardised data
-    logistic + relu : smooth first stage, sparse second
-    relu  + logistic: sparse features, bounded hidden-2 output
+    FITNESS METRIC: F1-score (see fitness_function() docstring for the
+    clinical note on why F1 is preferred over recall for this project).
     """
     coefs, intercepts = _unpack_weights(
         solution, input_size, hidden1_size, hidden2_size, output_size
     )
     y_pred = _forward_pass(X, coefs, intercepts, act_h1, act_h2)
-    return recall_score(y, y_pred, pos_label=1, zero_division=0)
+    # F1-score as primary fitness (see clinical note in fitness_function())
+    return f1_score(y, y_pred, pos_label=1, zero_division=0)
 
 
 # ---------------------------------------------------------------------------
@@ -388,7 +318,7 @@ if __name__ == '__main__':
     import pandas as pd
 
     print("=" * 60)
-    print("  parkinsons_hidden.py  —  self-test (2 hidden layers)")
+    print("  my_parkinsons_problem.py  —  self-test (2 hidden layers)")
     print("=" * 60)
 
     df = pd.read_csv('parkinsons_preprocessed.csv')
@@ -407,7 +337,7 @@ if __name__ == '__main__':
 
     # --- Standard path ---
     fit_std = fitness_function(theta, X, y)
-    print(f"\n[Standard / relu+relu]  Fitness (recall) : {fit_std:.4f}")
+    print(f"\n[Standard / relu+relu]  Fitness (F1) : {fit_std:.4f}")
     m_std = evaluate_solution(theta, X, y)
     for k, v in m_std.items():
         print(f"  {k:<12}: {v}")
@@ -417,6 +347,6 @@ if __name__ == '__main__':
     for a1, a2 in [('relu', 'relu'), ('relu', 'tanh'),
                    ('tanh', 'relu'), ('tanh', 'tanh')]:
         fit_c = fitness_function_custom_act(theta, X, y, act_h1=a1, act_h2=a2)
-        print(f"  act_h1={a1:<8}  act_h2={a2:<8}  recall={fit_c:.4f}")
+        print(f"  act_h1={a1:<8}  act_h2={a2:<8}  F1={fit_c:.4f}")
 
     print("\n[PASS] Module loaded successfully.")

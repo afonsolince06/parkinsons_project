@@ -256,7 +256,7 @@ def particle_swarm_optimisation(
 
     if verbose:
         print(f"\n  ✓ PSO finished.  Best fitness = {global_best_fit:.4f}  "
-              f"({global_best_fit*100:.1f}% recall)\n")
+              f"({global_best_fit*100:.1f}% F1)\n")
 
     return global_best_pos, global_best_fit, history
 
@@ -266,7 +266,7 @@ def particle_swarm_optimisation(
 # ===========================================================================
 if __name__ == '__main__':
     import pandas as pd
-    from parkinsons_problem import fitness_function, compute_n_params, evaluate_solution
+    from my_parkinsons_problem import fitness_function, compute_n_params, evaluate_solution
 
     df       = pd.read_csv('parkinsons_preprocessed.csv')
     X        = df.drop(columns=['status']).values
@@ -274,7 +274,7 @@ if __name__ == '__main__':
     n_params = compute_n_params()
 
     print("Running PSO (linear decay inertia, default hyperparameters) ...")
-    best_theta, best_recall, hist = particle_swarm_optimisation(
+    best_theta, best_f1, hist = particle_swarm_optimisation(
         fitness_fn    = fitness_function,
         n_params      = n_params,
         fitness_args  = (X, y),
@@ -286,10 +286,10 @@ if __name__ == '__main__':
 
     metrics = evaluate_solution(best_theta, X, y)
     print(f"\nFull evaluation of best PSO solution:")
-    print(f"  Recall    : {metrics['recall']:.4f}  ← fitness signal")
+    print(f"  F1        : {metrics['f1']:.4f}  ← fitness signal")
+    print(f"  Recall    : {metrics['recall']:.4f}")
     print(f"  Accuracy  : {metrics['accuracy']:.4f}")
     print(f"  Precision : {metrics['precision']:.4f}")
-    print(f"  F1        : {metrics['f1']:.4f}")
     print(f"  Predicted positive : {metrics['n_pred_pos']}")
     print(f"  Predicted negative : {metrics['n_pred_neg']}")
     print(f"\nHistory (last 5 iters): {[round(h,4) for h in hist[-5:]]}")
