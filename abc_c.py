@@ -13,47 +13,6 @@ def artificial_bee_colony(
     seed=42,
     verbose=False
 ):
-    """
-    Artificial Bee Colony algorithm for continuous optimisation.
-
-    In this project, each food source represents one candidate weight vector
-    for the MLP neural network. The goal is to maximise the fitness function,
-    for example recall or F1-score.
-
-    Parameters
-    ----------
-    fitness_fn : function
-        Function to maximise. It must receive a solution vector followed by
-        the fitness_args.
-    n_params : int
-        Number of parameters/weights to optimise.
-    fitness_args : tuple
-        Extra arguments passed to the fitness function, usually (X, y).
-    colony_size : int
-        Total number of bees. Half are employed bees and half are onlooker bees.
-    n_iterations : int
-        Number of optimisation iterations.
-    limit : int
-        Maximum number of unsuccessful trials before a scout bee replaces
-        a food source.
-    lower_bound : float
-        Minimum value for each parameter.
-    upper_bound : float
-        Maximum value for each parameter.
-    seed : int
-        Random seed for reproducibility.
-    verbose : bool
-        If True, prints progress during the optimisation.
-
-    Returns
-    -------
-    best_solution : np.ndarray
-        Best weight vector found.
-    best_fitness : float
-        Fitness value of the best solution.
-    history : list
-        Best fitness value at each iteration.
-    """
 
     np.random.seed(seed)
 
