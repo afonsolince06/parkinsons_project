@@ -71,7 +71,7 @@ from my_parkinsons_problem import (
     DEFAULT_OUTPUT_SIZE,
 )
 from genetic_algorithm_c import genetic_algorithm
-from pso_c import particle_swarm_optimisation
+from my_pso_grid import particle_swarm_optimisation
 
 # ---------------------------------------------------------------------------
 # 0. Configuration
