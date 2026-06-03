@@ -72,7 +72,7 @@ def take_matrix(solution, idx, rows, cols):
     return matrix, idx
 
 
-def _unpack_weights(solution, input_size, hidden_sizes, output_size):
+def unpack_weights(solution, input_size, hidden_sizes, output_size):
     idx = 0
     hidden1_size = hidden_sizes[0]
     hidden2_size = hidden_sizes[1]
@@ -91,262 +91,94 @@ def _unpack_weights(solution, input_size, hidden_sizes, output_size):
 
     b3 = solution[idx:idx + output_size]
     idx += output_size
-    return [W1, W2, W3], [b1, b2, b3]
 
-def build_MLP(hidden_sizes, activation='relu', max_iter=1, warm_start=False):
+    coefs = [
+        np.array(W1),
+        np.array(W2),
+        np.array(W3)
+    ]
+
+    intercepts = [
+        np.array(b1),
+        np.array(b2),
+        np.array(b3)
+    ]
+    return coefs, intercepts
+
+def fitness_function(solution, X, y, input_size, hidden_sizes, output_size):
     """
-    Build an MLPClassifier with two hidden layers.
+    Evaluate one solution and return its fitness.
+
+    In this project, a solution is a vector with all neural network weights.
+    The function loads those weights into the MLP and returns the F1-score.
     """
-    return MLPClassifier(
+
+    # Create the MLP structure
+    clf = MLPClassifier(
         hidden_layer_sizes=hidden_sizes,
-        activation=activation,
+        activation='relu',
         solver='sgd',
-        max_iter=max_iter,
-        warm_start=warm_start,
-        random_state=42,
+        max_iter=1,
+        random_state=42
     )
 
-# ---------------------------------------------------------------------------
-# Custom forward pass  (supports per-layer activations)
-
-
-def _forward_pass(X, coefs, intercepts, act_h1, act_h2):
-    """
-    Two-hidden-layer forward pass implemented in numpy.
-
-    This bypasses sklearn completely, enabling *different* activations per
-    hidden layer.  The output layer always uses logistic (sigmoid) to
-    produce a probability for binary classification.
-
-    Parameters
-    ----------
-    X          : np.ndarray, shape (n_samples, input_size)
-    coefs      : list of [W1, W2, W3]
-    intercepts : list of [b1, b2, b3]
-    act_h1     : str — activation for hidden layer 1
-    act_h2     : str — activation for hidden layer 2
-
-    Returns
-    -------
-    y_pred : np.ndarray, shape (n_samples,) — binary predictions {0, 1}
-    """
-    W1, W2, W3 = coefs
-    b1, b2, b3 = intercepts
-
-    # Layer 1: input → hidden-1 (activation = act_h1)
-    h1 = _apply_activation(X @ W1 + b1, act_h1)
-
-    # Layer 2: hidden-1 → hidden-2 (activation = act_h2)
-    h2 = _apply_activation(h1 @ W2 + b2, act_h2)
-
-    # Output layer: hidden-2 → output (logistic for binary classification)
-    logit  = h2 @ W3 + b3         # shape (n_samples, 1)
-    prob   = _apply_activation(logit.ravel(), 'logistic')
-    y_pred = (prob >= 0.5).astype(int)
-    return y_pred
-
-
-# ---------------------------------------------------------------------------
-# Standard fitness function  (uniform activation via sklearn)
-# ---------------------------------------------------------------------------
-
-def fitness_function(
-    solution,
-    X,
-    y,
-    input_size   = DEFAULT_INPUT_SIZE,
-    hidden1_size = DEFAULT_HIDDEN1_SIZE,
-    hidden2_size = DEFAULT_HIDDEN2_SIZE,
-    output_size  = DEFAULT_OUTPUT_SIZE,
-    activation   = 'relu',   # uniform activation for both hidden layers
-):
-    """
-    Evaluate weight vector θ → return F1-SCORE (positive class).
-
-    Uses sklearn's MLPClassifier with a *uniform* activation.
-    For per-layer activations use fitness_function_custom_act().
-
-    Compatible with GA, PSO, DE, and ABC — all call:
-        fitness_fn(solution, X, y) → float in [0, 1]
-
-    Steps
-    -----
-    1. Build MLPClassifier(hidden_layer_sizes=(h1, h2), activation).
-    2. Dummy .fit() on two rows to initialise internal bookkeeping.
-    3. Overwrite coefs_ / intercepts_ with values from `solution`.
-    4. Forward pass on real X → predictions.
-    5. Return f1_score(y, y_pred, pos_label=1).
-    """
-    clf = _build_clf(hidden1_size, hidden2_size, activation)
-
-    # Dummy fit: one sample per class, minimal overhead
+    # Dummy fit only to make sklearn create the internal structure
     X_dummy = np.zeros((2, input_size))
     y_dummy = np.array([0, 1])
     clf.fit(X_dummy, y_dummy)
 
-    # Inject optimiser's weight vector
-    clf.coefs_, clf.intercepts_ = _unpack_weights(
-        solution, input_size, hidden1_size, hidden2_size, output_size
+    # Transform the solution vector into weights and biases
+    coefs, intercepts = unpack_weights(
+        solution,
+        input_size,
+        hidden_sizes,
+        output_size
     )
+    # Put our GA weights inside the neural network
+    clf.coefs_ = coefs
+    clf.intercepts_ = intercepts
 
     y_pred = clf.predict(X)
-    # PRIMARY FITNESS: F1-score (harmonic mean of precision and recall).
-    # CLINICAL NOTE: Recall would be preferred in practice (minimise false
-    # negatives), but pure recall maximisation leads to degenerate solutions
-    # (model predicts all samples as positive).  F1 prevents degeneracy while
-    # still strongly rewarding high recall, and produces more meaningful
-    # convergence curves for GA/PSO/DE/ABC comparison.
-    return f1_score(y, y_pred, pos_label=1, zero_division=0)
 
+    return f1_score(y, y_pred, zero_division=0)
 
-# ---------------------------------------------------------------------------
-# Custom-activation fitness function  (per-layer activations via numpy)
-# ---------------------------------------------------------------------------
-
-def fitness_function_custom_act(
-    solution,
-    X,
-    y,
-    input_size   = DEFAULT_INPUT_SIZE,
-    hidden1_size = DEFAULT_HIDDEN1_SIZE,
-    hidden2_size = DEFAULT_HIDDEN2_SIZE,
-    output_size  = DEFAULT_OUTPUT_SIZE,
-    act_h1       = 'relu',    # activation for hidden layer 1
-    act_h2       = 'relu',    # activation for hidden layer 2
-):
+def evaluate_solution(solution, X, y, input_size, hidden_sizes, output_size):
     """
-    Evaluate weight vector θ → return F1-SCORE using a *custom* numpy forward
-    pass that supports different activations per hidden layer.
-
-    Why this matters
-    ----------------
-    Using different activations per layer is impossible with sklearn's
-    MLPClassifier (it applies one activation uniformly).  This function
-    unpacks θ into weight matrices and runs the forward pass manually,
-    enabling combinations like relu→tanh or tanh→logistic.
-
-    FITNESS METRIC: F1-score (see fitness_function() docstring for the
-    clinical note on why F1 is preferred over recall for this project).
+    Evaluate the final solution using several metrics.
+    This is used after the optimization, not inside the GA loop.
     """
-    coefs, intercepts = _unpack_weights(
-        solution, input_size, hidden1_size, hidden2_size, output_size
+
+    clf = MLPClassifier(
+        hidden_layer_sizes=hidden_sizes,
+        activation='relu',
+        solver='sgd',
+        max_iter=1,
+        random_state=42
     )
-    y_pred = _forward_pass(X, coefs, intercepts, act_h1, act_h2)
-    # F1-score as primary fitness (see clinical note in fitness_function())
-    return f1_score(y, y_pred, pos_label=1, zero_division=0)
 
+    # Dummy fit to initialize sklearn's internal structure
+    X_dummy = np.zeros((2, input_size))
+    y_dummy = np.array([0, 1])
+    clf.fit(X_dummy, y_dummy)
 
-# ---------------------------------------------------------------------------
-# Standard evaluate_solution  (uniform activation)
-# ---------------------------------------------------------------------------
-
-def evaluate_solution(
-    solution,
-    X,
-    y,
-    input_size   = DEFAULT_INPUT_SIZE,
-    hidden1_size = DEFAULT_HIDDEN1_SIZE,
-    hidden2_size = DEFAULT_HIDDEN2_SIZE,
-    output_size  = DEFAULT_OUTPUT_SIZE,
-    activation   = 'relu',
-):
-    """
-    Full diagnostic evaluation after optimisation completes.
-
-    Returns dict with keys:
-        accuracy, recall, precision, f1, n_pred_pos, n_pred_neg
-    """
-    clf = _build_clf(hidden1_size, hidden2_size, activation)
-    clf.fit(np.zeros((2, input_size)), np.array([0, 1]))
-    clf.coefs_, clf.intercepts_ = _unpack_weights(
-        solution, input_size, hidden1_size, hidden2_size, output_size
+    # Convert solution vector into MLP weights
+    coefs, intercepts = unpack_weights(
+        solution,
+        input_size,
+        hidden_sizes,
+        output_size
     )
+
+    clf.coefs_ = coefs
+    clf.intercepts_ = intercepts
+
     y_pred = clf.predict(X)
 
     return {
-        'accuracy'  : accuracy_score(y, y_pred),
-        'recall'    : recall_score(y,    y_pred, pos_label=1, zero_division=0),
-        'precision' : precision_score(y, y_pred, pos_label=1, zero_division=0),
-        'f1'        : f1_score(y,        y_pred, pos_label=1, zero_division=0),
-        'n_pred_pos': int((y_pred == 1).sum()),
-        'n_pred_neg': int((y_pred == 0).sum()),
+        "accuracy": accuracy_score(y, y_pred),
+        "recall": recall_score(y, y_pred, pos_label=1, zero_division=0),
+        "precision": precision_score(y, y_pred, pos_label=1, zero_division=0),
+        "f1": f1_score(y, y_pred, zero_division=0),
+        "predicted_positive": int((y_pred == 1).sum()),
+        "predicted_negative": int((y_pred == 0).sum())
     }
-
-
-# ---------------------------------------------------------------------------
-# Custom-activation evaluate_solution  (per-layer activations)
-# ---------------------------------------------------------------------------
-
-def evaluate_solution_custom_act(
-    solution,
-    X,
-    y,
-    input_size   = DEFAULT_INPUT_SIZE,
-    hidden1_size = DEFAULT_HIDDEN1_SIZE,
-    hidden2_size = DEFAULT_HIDDEN2_SIZE,
-    output_size  = DEFAULT_OUTPUT_SIZE,
-    act_h1       = 'relu',
-    act_h2       = 'relu',
-):
-    """
-    Full diagnostic evaluation using the custom numpy forward pass.
-
-    Returns the same dict schema as evaluate_solution() plus the
-    activation pair used, for easy CSV export.
-    """
-    coefs, intercepts = _unpack_weights(
-        solution, input_size, hidden1_size, hidden2_size, output_size
-    )
-    y_pred = _forward_pass(X, coefs, intercepts, act_h1, act_h2)
-
-    return {
-        'act_h1'    : act_h1,
-        'act_h2'    : act_h2,
-        'accuracy'  : accuracy_score(y, y_pred),
-        'recall'    : recall_score(y,    y_pred, pos_label=1, zero_division=0),
-        'precision' : precision_score(y, y_pred, pos_label=1, zero_division=0),
-        'f1'        : f1_score(y,        y_pred, pos_label=1, zero_division=0),
-        'n_pred_pos': int((y_pred == 1).sum()),
-        'n_pred_neg': int((y_pred == 0).sum()),
-    }
-
-
-# ---------------------------------------------------------------------------
-# Self-test
-# ---------------------------------------------------------------------------
-if __name__ == '__main__':
-    import pandas as pd
-
-    print("=" * 60)
-    print("  my_parkinsons_problem.py  —  self-test (2 hidden layers)")
-    print("=" * 60)
-
-    df = pd.read_csv('parkinsons_preprocessed.csv')
-    X  = df.drop(columns=['status']).values.astype(float)
-    y  = df['status'].values.astype(int)
-    print(f"\nDataset : {X.shape[0]} samples, {X.shape[1]} features")
-    print(f"Classes : {(y==1).sum()} Parkinson's  |  {(y==0).sum()} Healthy")
-
-    n_params = compute_n_params()
-    print(f"\nArchitecture : {DEFAULT_INPUT_SIZE} → {DEFAULT_HIDDEN1_SIZE}"
-          f" → {DEFAULT_HIDDEN2_SIZE} → {DEFAULT_OUTPUT_SIZE}")
-    print(f"Total params : {n_params}")
-
-    np.random.seed(0)
-    theta = generate_solution(n_params)
-
-    # --- Standard path ---
-    fit_std = fitness_function(theta, X, y)
-    print(f"\n[Standard / relu+relu]  Fitness (F1) : {fit_std:.4f}")
-    m_std = evaluate_solution(theta, X, y)
-    for k, v in m_std.items():
-        print(f"  {k:<12}: {v}")
-
-    # --- Custom activation path ---
-    print("\n[Custom activation combinations]")
-    for a1, a2 in [('relu', 'relu'), ('relu', 'tanh'),
-                   ('tanh', 'relu'), ('tanh', 'tanh')]:
-        fit_c = fitness_function_custom_act(theta, X, y, act_h1=a1, act_h2=a2)
-        print(f"  act_h1={a1:<8}  act_h2={a2:<8}  F1={fit_c:.4f}")
-
-    print("\n[PASS] Module loaded successfully.")

@@ -4,7 +4,6 @@ import numpy as np
 import math
 
 
-
 def xavier_initialization(pop_size, layer_sizes):
     """
       Xavier (Glorot) uniform initialisation.
@@ -42,17 +41,6 @@ def xavier_initialization(pop_size, layer_sizes):
 
 #selection methods
 def roulette_selection(population, fitnesses, maximization = True):
-
-    """
-        Select one individual from the population using roulette wheel selection.
-
-        Args:
-            population (list): List of individuals (vectors θ).
-            fitnesses (list or array): Fitness value for each individual.
-
-        Returns:
-            ind: Selected individual (copy of vector).
-        """
     S = sum(fitnesses)
 
     alpha = random.uniform(0, S)
@@ -65,12 +53,12 @@ def roulette_selection(population, fitnesses, maximization = True):
     return population[j - 1]
 
 def  tournament_selection( population, fitnesses, maximization= True, k=3):
-    tournament =random.sample( range(len(population)), k)
-    best= tournament[0]
+    tournament = random.sample(range(len(population)), k)
+    best = tournament[0]
     j=1
     for j in range(1, len(tournament)):
         i1, i2 = best, tournament[j]
-        if (fitnesses[i1] > fitnesses[i2]):
+        if fitnesses[i1] > fitnesses[i2]:
             best = i1
         else:
             best = i2
@@ -110,7 +98,6 @@ def blend_crossover(p1, p2 , alpha=0.5):
         d= abs(p2[i]-p1[i])
         lower = min(p1[i], p2[i]) - alpha * d
         upper = max(p1[i], p2[i]) + alpha * d
-#posso usar max e min ?
 
         g1 = random.uniform(lower, upper)
         g2 = random.uniform(lower, upper)
@@ -196,7 +183,7 @@ def genetic_algorithm(fitness_func,
                       selector,
                       mutator,
                       crossover,
-                      pop_size = 50,
+                      pop_size = 100,
                       generations= 100,
                       mutation_rate = 0.05 ,
                       crossover_rate= 0.8,
@@ -260,8 +247,6 @@ def genetic_algorithm(fitness_func,
 
         # evaluating the offspring
         fitnesses = [fitness_func(ind) for ind in population]
-
-        # --- Track best ---
 
         gen_best_idx = fitnesses.index(max(fitnesses))
         gen_best_fit = fitnesses[gen_best_idx]

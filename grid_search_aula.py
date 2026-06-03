@@ -17,10 +17,10 @@ for ini in initializations:
             for mut in mutations:
                 fitness_vector = []
                 
-                for run in range(30):  # 30 independent runs
+                for run in range(3):  # 30 independent runs
                     best_solution, best_fitness = genetic_algorithm(
                         initialization_func = ini,
-                        fitness_func        = fitness_funct,
+                        fitness_func        = fitness_func,
                         selection_func      = sel,
                         crossover_func      = cro,
                         mutator             = mut,
