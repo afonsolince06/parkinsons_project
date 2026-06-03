@@ -12,7 +12,7 @@ from parkinsons_problem_c import (
 
 
 def main():
-    
+
     SEED = 42
     DATA_PATH = "parkinsons_preprocessed.csv"
 
@@ -46,12 +46,6 @@ def main():
     print(f"Seed: {SEED}")
 
     def abc_fitness(solution, X, y):
-        """
-        Fitness function used by ABC.
-
-        This project uses the same fitness function already defined
-        for the Parkinson's MLP problem.
-        """
         return fitness_function(solution, X, y)
 
     print("\nRunning ABC optimisation...\n")

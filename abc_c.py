@@ -38,9 +38,7 @@ def artificial_bee_colony(
     history = []
 
     def generate_neighbour(index):
-        """
-        Creates a neighbour solution from the current food source.
-        """
+
         neighbour = population[index].copy()
 
         k = np.random.choice([i for i in range(n_food_sources) if i != index])
@@ -53,7 +51,6 @@ def artificial_bee_colony(
             population[index, j] - population[k, j]
         )
 
-        # Keep values inside the allowed range
         neighbour = np.clip(neighbour, lower_bound, upper_bound)
 
         return neighbour
