@@ -8,11 +8,11 @@ from my_parkinsons_problem import fitness_function, compute_n_params
 def differential_evolution(
     fitness_func,
     n_params,
-    pop_size=30,
-    generations=100,
+    pop_size= None ,
+    generations= None ,
     bounds=(-1.0, 1.0),
-    F=0.8,
-    CR=0.9,
+    F= None,
+    CR=None,
     maximization=True,
     seed=None,
 ):
