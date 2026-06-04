@@ -1,0 +1,9 @@
+test,group_a,group_b,statistic,p_value,effect_size,effect_label,significant,note,metric,description
+Paired t-test,GA-standard,GA-extended,1.4812,0.1727,0.714,Cohen's d,False,Parametric; assumes normality,recall,Standard vs Extended operators
+Wilcoxon signed-rank,GA-standard,GA-extended,6.0,0.2656,-0.32,Rank-biserial r,False,Non-parametric; robust to non-normality,recall,Standard vs Extended operators
+Paired t-test,GA-extended,PSO,-0.8847,0.3994,-0.3151,Cohen's d,False,Parametric; assumes normality,recall,GA-extended vs PSO
+Wilcoxon signed-rank,GA-extended,PSO,6.5,0.5312,0.24,Rank-biserial r,False,Non-parametric; robust to non-normality,recall,GA-extended vs PSO
+Paired t-test,GA-standard,PSO,0.6348,0.5414,0.3133,Cohen's d,False,Parametric; assumes normality,recall,GA-standard vs PSO
+Wilcoxon signed-rank,GA-standard,PSO,9.0,1.0,-0.04,Rank-biserial r,False,Non-parametric; robust to non-normality,recall,GA-standard vs PSO
+One-way ANOVA,GA-standard + GA-extended + PSO,(all),1.0605,0.3603,,,False,Three-group comparison; H0: equal means,recall,All three variants
+One-way ANOVA,All GA activation combos,(all),,,,,False,One run per combo; tests whether activation matters,f1,Phase 6: Activation combinations
