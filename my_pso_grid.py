@@ -33,7 +33,7 @@ results_pso = pd.DataFrame(columns=[
 
 n_params = compute_n_params(22, (10, 10), 1)
 
-
+history=[]
 # Grid search
 for n_particles in n_particles_list:
     for n_iter in n_iterations_list:
@@ -56,7 +56,7 @@ for n_particles in n_particles_list:
                         end_time = time.time()
                         elapsed_time = end_time - start_time
                         print(f"Run {run + 1} completed in {elapsed_time:.2f} seconds")  # opcional
-
+                        history.append(best_fit)
                     results_pso = pd.concat([
                         results_pso,
                         pd.DataFrame([{
