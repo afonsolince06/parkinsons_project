@@ -5,13 +5,12 @@ def artificial_bee_colony(
     fitness_fn,
     n_params,
     fitness_args=(),
-    colony_size=50,
-    n_iterations=50,
-    limit=10,
+    colony_size=None,
+    n_iterations=None,
+    limit=None,
     lower_bound=-1.0,
     upper_bound=1.0,
-    seed=42,
-    verbose=False
+    seed=42
 ):
 
     np.random.seed(seed)
@@ -106,11 +105,5 @@ def artificial_bee_colony(
             best_solution = population[current_best_index].copy()
 
         history.append(best_fitness)
-
-        if verbose:
-            print(
-                f"Iteration {iteration + 1}/{n_iterations} "
-                f"| Best fitness: {best_fitness:.4f}"
-            )
 
     return best_solution, best_fitness, history
