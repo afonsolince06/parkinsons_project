@@ -5,7 +5,6 @@ import time
 from my_parkinsons_problem import fitness_function, compute_n_params
 from differential_evolution import differential_evolution
 
-
 df = pd.read_csv("parkinsons_preprocessed.csv")
 X  = df.drop(columns=["status"]).values.astype(float)
 y  = df["status"].values.astype(int)
@@ -18,14 +17,12 @@ def fitness_fn(solution):
 
 n_params = compute_n_params(22, (10, 10), 1)
 
-
 pop_size    = [50, 100]
 n_generations  = [50, 100]
-F_list          = [0.5, 0.8]        # escala de mutação
-CR_list          = [0.7, 0.9]        # taxa de crossover
+F_list          = [0.5, 0.8]
+CR_list          = [0.7, 0.9]
 
-n_runs = 3   # repetições por combinação 
-
+n_runs = 3
 
 results_de = pd.DataFrame(columns=[
     'pop_size', 'generations', 'F', 'CR',
@@ -59,7 +56,7 @@ for pop in pop_size:
                         F             = F,
                         CR            = CR,
                         maximization  = True,
-                        seed          = run * 7 + combo_count   # 
+                        seed          = run * 7 + combo_count
                     )
 
                     all_fit.append(best_fit)
@@ -93,12 +90,10 @@ for pop in pop_size:
                     }])
                 ], ignore_index=True)
 
-                # Serve para guardar os resultados
                 results_de.to_csv("de_gridsearch_full.csv", index=False)
 
 print(f"\nGrid search DE concluído em {(time.time() - global_start)/60:.1f} minutos.")
 
-# Mostra as melhores combinações no final
 print("\nTop 5 combinações:")
 top5 = results_de.sort_values(by='mean_fitness', ascending=False).head(5)
 print(top5[['pop_size', 'generations', 'F', 'CR',

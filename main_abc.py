@@ -1,9 +1,9 @@
 import time
 import pandas as pd
 
-from abc_c import artificial_bee_colony
+from my_abc_c import artificial_bee_colony
 
-from parkinsons_problem_c import (
+from my_parkinsons_problem import (
     evaluate_solution,
     compute_n_params
 )
@@ -19,14 +19,12 @@ def main():
     y = df["status"].values
 
     input_size = X.shape[1]
-    hidden1_size = 10
-    hidden2_size = 10
+    hidden_sizes= (10,10)
     output_size = 1
 
     n_params = compute_n_params(
         input_size=input_size,
-        hidden1_size=hidden1_size,
-        hidden2_size=hidden2_size,
+        hidden_sizes=hidden_sizes,
         output_size=output_size
     )
 
@@ -36,8 +34,7 @@ def main():
             X,
             y,
             input_size=input_size,
-            hidden1_size=hidden1_size,
-            hidden2_size=hidden2_size,
+            hidden_sizes=hidden_sizes,
             output_size=output_size
         )
 
@@ -54,7 +51,6 @@ def main():
         lower_bound=-1.0,
         upper_bound=1.0,
         seed=seed,
-        verbose=False
     )
 
     runtime = time.time() - start_time
@@ -64,8 +60,7 @@ def main():
         X,
         y,
         input_size=input_size,
-        hidden1_size=hidden1_size,
-        hidden2_size=hidden2_size,
+        hidden_sizes=hidden_sizes,
         output_size=output_size
     )
 
