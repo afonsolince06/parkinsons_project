@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import warnings
+import time
 from functools import partial
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -47,11 +47,11 @@ crossovers      = [arithmetic_crossover, blend_crossover]
 mutations       = [gaussian_mutation, uniform_mutation, non_uniform_mutation]
 
 n_runs          = 2  # repetitions per combination
-pop_size        = [30, 50, 100]
-n_generations   = [30, 50, 100]
-mutation_rate   = [0.05, 0.1, 0.2]
-crossover_rate  = [0.7, 0.8, 0.9]
-elitism         = [1,2]
+pop_size        = [100]
+n_generations   = [100,400]
+mutation_rate   = [0.01,0.05, 0.1]
+crossover_rate  = [ 0.9]
+elitism         = [2]
 
 # Prepare results DataFrame
 results_gridsearch = pd.DataFrame(columns=[
@@ -62,7 +62,11 @@ results_gridsearch = pd.DataFrame(columns=[
 
 # Total number of parameters
 n_params = compute_n_params(input_size, hidden_sizes, output_size)
-
+total_combinations = (len(pop_size) * len(n_generations) * len(mutation_rate) *
+                      len(crossover_rate) * len(elitism) * len(initializations) *
+                      len(selections) * len(crossovers) * len(mutations))
+start_time= time.time()
+combo_count = 0
 for pop in pop_size:
     for ngen in n_generations:
         for mut_r in mutation_rate:
@@ -73,7 +77,10 @@ for pop in pop_size:
                             for cros in crossovers:
                                 for mut in mutations:
                                     all_fit= []
+                                    all_histories = []
+                                    combo_count += 1
                                     for run in range(n_runs):
+                                        start_time = time.time()
                                         best_sol, best_fit, history = genetic_algorithm(
                                             fitness_func=fitness_fn,
                                             init=init,
@@ -88,30 +95,43 @@ for pop in pop_size:
                                             layer_sizes=[22, 10, 10, 1],
                                             maximization=True
                                         )
+                                        elapsed_time = time.time() - start_time  # fim da contagem
+                                        print(f"Run {run + 1} completed in {elapsed_time:.2f} seconds")  # opcional
                                         all_fit.append(best_fit)
+                                        all_histories.append(history)
 
-                                        mean_fit = np.mean(all_fit)
-                                        std_fit = np.std(all_fit)
+                                    mean_fit = np.mean(all_fit)
+                                    std_fit = np.std(all_fit)
 
-                                        results_gridsearch = pd.concat([
-                                            results_gridsearch,
-                                            pd.DataFrame([{
-                                                'initialization': init.__name__,
-                                                'selection': sel.__name__,
-                                                'crossover': cros.__name__,
-                                                'mutation': mut.__name__,
-                                                'pop_size': pop,
-                                                'n_generations': ngen,
-                                                'mutation_rate': mut_r,
-                                                'crossover_rate': cro_r,
-                                                'elitism': eli,
-                                                'mean_fitness': mean_fit,
-                                                'std_fitness': std_fit,
-                                                'all_fitnesses': all_fit
-                                            }])
-                                        ], ignore_index=True)
+                                    elapsed_total = time.time() - start_time
+                                    avg_per_combo = elapsed_total / combo_count
+                                    remaining = (total_combinations - combo_count) * avg_per_combo
+                                    print(f"  [{combo_count}/{total_combinations}] "
+                                          f"mean={mean_fit:.4f} | "
+                                          f"elapsed={elapsed_total / 60:.1f}min | "
+                                          f"remaining~{remaining / 60:.1f}min\n")
 
 
+                                    results_gridsearch = pd.concat([
+                                        results_gridsearch,
+                                        pd.DataFrame([{
+                                            'initialization': init.__name__,
+                                            'selection': sel.__name__,
+                                            'crossover': cros.__name__,
+                                            'mutation': mut.__name__,
+                                            'pop_size': pop,
+                                            'n_generations': ngen,
+                                            'mutation_rate': mut_r,
+                                            'crossover_rate': cro_r,
+                                            'elitism': eli,
+                                            'mean_fitness': mean_fit,
+                                            'std_fitness': std_fit,
+                                            'all_fitnesses': all_fit
+                                        }])
+                                    ], ignore_index=True)
+                                    results_gridsearch.to_csv("ga_gridsearch_full.csv", index=False)
+
+print(f"\nGrid search concluído em {(time.time() - start_time)/60:.1f} minutos.")
 
 results_gridsearch = pd.read_csv("ga_gridsearch_full.csv")
 top5 = results_gridsearch.sort_values(by='mean_fitness', ascending=False).head(5)

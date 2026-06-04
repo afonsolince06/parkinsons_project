@@ -84,6 +84,8 @@ def rank_selection(population,fitnesses, maximization = True):
     return population[selected]
 
 #crossover
+
+
 def blend_crossover(p1, p2 , alpha=0.5):
     """
         Blend (BLX-α) crossover: sample uniformly from an extended interval
