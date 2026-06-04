@@ -1,2 +1,2 @@
-algorithm,fitness_metric,best_fitness,accuracy,recall,precision,f1,n_pred_pos,n_pred_neg,colony_size,iterations,limit,runtime_seconds,seed
-ABC,same_as_problem_definition,1.0,0.7538461538461538,1.0,0.7538461538461538,0.8596491228070176,195,0,50,50,10,7.06,42
+algorithm,fitness_metric,colony_size,n_iterations,limit,best_fitness,accuracy,recall,precision,f1,n_pred_pos,n_pred_neg,runtime,seed
+ABC,f1,50,50,10,0.8838709677419355,0.8153846153846154,0.9319727891156463,0.8404907975460123,0.8838709677419355,163,32,18.560269594192505,42
