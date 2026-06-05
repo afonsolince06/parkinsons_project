@@ -3,7 +3,7 @@ import pandas as pd
 import time
 
 from my_parkinsons_problem import fitness_function, compute_n_params
-from differential_evolution import differential_evolution
+from my_differential_evolution import differential_evolution
 
 df = pd.read_csv("parkinsons_preprocessed.csv")
 X  = df.drop(columns=["status"]).values.astype(float)
@@ -92,9 +92,9 @@ for pop in pop_size:
 
                 results_de.to_csv("de_gridsearch_full.csv", index=False)
 
-print(f"\nGrid search DE concluído em {(time.time() - global_start)/60:.1f} minutos.")
+print(f"\nGrid search DE completed in {(time.time() - global_start)/60:.1f} min.")
 
-print("\nTop 5 combinações:")
+print("\nTop 5 combos:")
 top5 = results_de.sort_values(by='mean_fitness', ascending=False).head(5)
 print(top5[['pop_size', 'generations', 'F', 'CR',
             'mean_fitness', 'std_fitness']].to_string(index=False))

@@ -197,18 +197,5 @@ def main():
 
     plot_results(RESULTS_FILE)
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--plot-only",
-        action="store_true",
-        help="Generate only the plot from the existing CSV file.",
-    )
-
-    args = parser.parse_args()
-
-    if args.plot_only:
-        plot_results(RESULTS_FILE)
-    else:
-        main()
+    main()

@@ -60,23 +60,17 @@ def differential_evolution(
             trial = np.where(cross_mask, mutant, population[i])
             trial_fitness = fitness_func(trial)
 
-
             if trial_fitness >= fitness[i]:
                 population[i] = trial
                 fitness[i]    = trial_fitness
-
 
             if trial_fitness > best_fitness:
                 best_fitness    = trial_fitness
                 best_individual = trial.copy()
 
         history.append(best_fitness)
-
         
-        print(f"  [DE] Geração {gen + 1:>4}/{generations} | Melhor fitness: {best_fitness:.6f}")
+        print(f"  [DE] Generation {gen + 1:>4}/{generations} | Best fitness: {best_fitness:.6f}")
 
     return best_individual, best_fitness, history
-
-if __name__ == "__main__":
-    _example_sphere_function()
 

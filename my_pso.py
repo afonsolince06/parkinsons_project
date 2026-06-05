@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import pandas as pd
 
 def pso(fitness_func,
     n_particles,
@@ -76,3 +77,10 @@ def pso(fitness_func,
         print("Iteration", iteration + 1,"Best fitness:", round(g_best_fit, 4))
 
     return g_best, g_best_fit, history
+
+
+
+results_pso = pd.read_csv("pso_gridsearch_full.csv")
+top5_pso = results_pso.sort_values(by='mean_fitness', ascending=False).head(5)
+top5_dict = top5_pso.to_dict(orient='records')
+top5_dict

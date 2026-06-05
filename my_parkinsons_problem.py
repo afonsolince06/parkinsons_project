@@ -1,35 +1,3 @@
-"""
-Architecture
-    Input  →  Hidden-1  →  Hidden-2  →  Output
-      22        10            10           1
-
-Total parameters (default architecture):
-    W1 : 22 × 10 = 220   (input   → hidden1 weights)
-    b1 :      10 =  10   (hidden1 biases)
-    W2 : 10 × 10 = 100   (hidden1 → hidden2 weights)
-    b2 :      10 =  10   (hidden2 biases)
-    W3 : 10 ×  1 =  10   (hidden2 → output weights)
-    b3 :       1 =   1   (output   bias)
-    Total       = 351 parameters
-
-Fitness Metric: F1-Score
-    The primary fitness metric is F1-score.
-
-    CLINICAL NOTE: In a real diagnostic context, recall (sensitivity) is
-    the preferred metric because the cost of a False Negative (missed
-    Parkinson's diagnosis) far exceeds the cost of a False Positive.
-    However, pure recall optimisation tends to produce *degenerate*
-    solutions where the model predicts every sample as positive (recall=1.0,
-    but precision=0.0 and the model is clinically useless).
-
-    F1-score (harmonic mean of precision and recall) penalises degenerate
-    solutions while still strongly rewarding high recall.  This produces
-    more meaningful convergence curves for visualisation and algorithm
-    comparison, which is the primary goal of this project.
-
-    All four algorithms (GA, PSO, DE, ABC) share the same fitness interface:
-        fitness_fn(solution, X, y) → float  [0, 1]
-"""
 import random
 import numpy as np
 from sklearn.neural_network import MLPClassifier

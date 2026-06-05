@@ -8,8 +8,8 @@ def xavier_initialization(pop_size, layer_sizes):
     """
       Xavier (Glorot) uniform initialisation.
 
-      Each weight matrix Wl is drawn from Uniform[-√(6/(fan_in+fan_out)),
-      +√(6/(fan_in+fan_out))].  Biases are initialised to zero.
+      Each weight matrix Wl is drawn from Uniform[-sqrt(6/(fan_in+fan_out)),
+      +sqrt(6/(fan_in+fan_out))].  Biases are initialised to zero.
 
       Rationale: Xavier init keeps signal variance roughly constant across
       layers, reducing the risk of vanishing/exploding signals at start.
@@ -84,8 +84,6 @@ def rank_selection(population,fitnesses, maximization = True):
     return population[selected]
 
 #crossover
-
-
 def blend_crossover(p1, p2 , alpha=0.5):
     """
         Blend (BLX-α) crossover: sample uniformly from an extended interval

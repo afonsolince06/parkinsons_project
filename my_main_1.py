@@ -39,7 +39,7 @@ def fitness_fn(solution):
 
 ga_solution, ga_fitness, ga_history = genetic_algorithm(
     fitness_func   = fitness_fn,
-    init           = 'xavier',
+    init           = 'random_initialization',
     selector       = tournament_selection,
     mutator        = 'gaussian',
     crossover      = blend_crossover,
