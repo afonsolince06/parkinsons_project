@@ -18,6 +18,7 @@ from my_GA import (
     gaussian_mutation,
 )
 from my_pso import pso
+from my_differential_evolution import differential_evolution
 
 # ── data ──────────────────────────────────────────────────────────────────────
 df = pd.read_csv("parkinsons_preprocessed.csv")
@@ -69,9 +70,22 @@ pso_solution, pso_fitness, pso_history = pso(
     high          = 1.0,
 )
 
+de_solution, de_fitness, de_history = differential_evolution(
+    fitness_func  = fitness_fn,
+    n_params      = n_params,
+    pop_size      = 50,
+    generations   = 100,
+    bounds        = (-1.0, 1.0),
+    F             = 0.8,
+    CR            = 0.9,
+    maximization  = True,
+    seed          = 42
+)
+
 # ── results ───────────────────────────────────────────────────────────────────
 ga_metrics  = evaluate_solution(ga_solution,  X, y, input_size, hidden_sizes, output_size)
 pso_metrics = evaluate_solution(pso_solution, X, y, input_size, hidden_sizes, output_size)
+de_metrics  = evaluate_solution(de_solution,  X, y, input_size, hidden_sizes, output_size)
 
 print("\n=== GA ===")
 for k, v in ga_metrics.items():
@@ -81,13 +95,18 @@ print("\n=== PSO ===")
 for k, v in pso_metrics.items():
     print(f"  {k}: {v:.4f}" if isinstance(v, float) else f"  {k}: {v}")
 
+print("\n=== DE ===")
+for k, v in de_metrics.items():
+    print(f"  {k}: {v:.4f}" if isinstance(v, float) else f"  {k}: {v}")
+
 # ── convergence plot ──────────────────────────────────────────────────────────
 plt.figure(figsize=(9, 5))
 plt.plot(ga_history,  label="GA",  linewidth=1.5)
 plt.plot(pso_history, label="PSO", linewidth=1.5)
+plt.plot(de_history, label="DE", linewidth=1.5)
 plt.xlabel("Generation / Iteration")
 plt.ylabel("Best F1-score")
-plt.title("Convergence – GA vs PSO")
+plt.title("Convergence – GA vs PSO vs DE")
 plt.legend()
 plt.tight_layout()
 plt.savefig("convergence.png", dpi=150)
