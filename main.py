@@ -137,7 +137,7 @@ def main():
     # Particle Swarm Optimization
    
     # Best PSO configuration from grid search:
-    # n_particles=100, n_iterations=100, w=0.9, c1=1.0, c2=1.0
+
 
     start_time = time.time()
 
