@@ -1,20 +1,17 @@
 import time
 import pandas as pd
+import random
 
 from my_abc_c import artificial_bee_colony
-
 from my_parkinsons_problem import (
     evaluate_solution,
     compute_n_params
 )
 
-
 def main():
-    seed = 42
     data_path = "parkinsons_preprocessed.csv"
 
     df = pd.read_csv(data_path)
-
     X = df.drop(columns=["status"]).values
     y = df["status"].values
 
@@ -37,12 +34,12 @@ def main():
             hidden_sizes=hidden_sizes,
             output_size=output_size
         )
-
         return metrics["f1"]
 
-    colony_sizes = [20, 50,100]
-    n_iterations_list = [30, 50,100]
+    colony_sizes = [20, 50, 100]
+    n_iterations_list = [30, 50, 100]
     limits = [5, 10]
+    n_runs = 3  # número de repetições por configuração
 
     results = []
 
@@ -50,67 +47,65 @@ def main():
         for n_iterations in n_iterations_list:
             for limit in limits:
 
-                start_time = time.time()
+                all_fit = []
 
-                best_solution, best_fitness, history = artificial_bee_colony(
-                    fitness_fn=fitness_fn,
-                    n_params=n_params,
-                    colony_size=colony_size,
-                    n_iterations=n_iterations,
-                    limit=limit,
-                    lower_bound=-1.0,
-                    upper_bound=1.0,
-                    seed=seed
-                )
+                for run in range(n_runs):
 
-                runtime = time.time() - start_time
+                    seed_run = 42 + run
 
-                metrics = evaluate_solution(
-                    best_solution,
-                    X,
-                    y,
-                    input_size=input_size,
-                    hidden_sizes= hidden_sizes,
-                    output_size=output_size
-                )
+                    start_time = time.time()
+                    best_solution, best_fitness, history = artificial_bee_colony(
+                        fitness_fn=fitness_fn,
+                        n_params=n_params,
+                        colony_size=colony_size,
+                        n_iterations=n_iterations,
+                        limit=limit,
+                        lower_bound=-1.0,
+                        upper_bound=1.0,
+                        seed=seed_run
+                    )
+                    runtime = time.time() - start_time
 
+                    metrics = evaluate_solution(
+                        best_solution,
+                        X,
+                        y,
+                        input_size=input_size,
+                        hidden_sizes=hidden_sizes,
+                        output_size=output_size
+                    )
+
+                    all_fit.append(best_fitness)
+
+                    print(
+                        f"Run {run + 1} | ABC | colony_size={colony_size}, "
+                        f"iterations={n_iterations}, limit={limit} "
+                        f"-> F1={metrics['f1']:.4f}, "
+                        f"Accuracy={metrics['accuracy']:.4f}, "
+                        f"Recall={metrics['recall']:.4f}, "
+                        f"Precision={metrics['precision']:.4f}"
+                    )
+
+                # Guardar resultados por configuração média
                 results.append({
                     "algorithm": "ABC",
                     "fitness_metric": "f1",
                     "colony_size": colony_size,
                     "n_iterations": n_iterations,
                     "limit": limit,
-                    "best_fitness": best_fitness,
-                    "accuracy": metrics["accuracy"],
-                    "recall": metrics["recall"],
-                    "precision": metrics["precision"],
-                    "f1": metrics["f1"],
-                    "runtime": runtime,
-                    "seed": seed
+                    "mean_fitness": sum(all_fit)/len(all_fit),
+                    "std_fitness": pd.Series(all_fit).std(),
+                    "all_fitnesses": all_fit
                 })
 
-                print(
-                    f"ABC | colony_size={colony_size}, "
-                    f"iterations={n_iterations}, "
-                    f"limit={limit} "
-                    f"-> F1={metrics['f1']:.4f}, "
-                    f"Accuracy={metrics['accuracy']:.4f}, "
-                    f"Recall={metrics['recall']:.4f}, "
-                    f"Precision={metrics['precision']:.4f}"
-                )
-
     results_df = pd.DataFrame(results)
-    results_df = results_df.sort_values(by="f1", ascending=False)
-
-    results_df.to_csv("abc_grid_search_results.csv", index=False)
+    results_df = results_df.sort_values(by="mean_fitness", ascending=False)
+    results_df.to_csv("my_abc_grid_search_results.csv", index=False)
 
     print("\nABC mini grid search completed.")
     print("\nBest configuration:")
     print(results_df.iloc[0])
-
-    print("\nSaved file:")
-    print("- abc_grid_search_results.csv")
-
+    print("\nSaved file: my_abc_grid_search_results.csv")
 
 if __name__ == "__main__":
     main()
