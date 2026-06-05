@@ -28,6 +28,7 @@ def differential_evolution(
         low  = np.array([b[0] for b in bounds], dtype=float)
         high = np.array([b[1] for b in bounds], dtype=float)
 
+    
 
     population = np.random.uniform(low, high, size=(pop_size, n_params))
 

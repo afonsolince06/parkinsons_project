@@ -26,9 +26,8 @@ from my_differential_evolution import differential_evolution
 from my_abc_c import artificial_bee_colony
 
 
-# -------------------------------------------------------------------------
 # Data
-# -------------------------------------------------------------------------
+
 
 df = pd.read_csv("parkinsons_preprocessed.csv")
 
@@ -95,9 +94,9 @@ def evaluate_algorithm(name, solution, runtime):
 def main():
     results = []
 
-    # ---------------------------------------------------------------------
+    
     # Genetic Algorithm
-    # ---------------------------------------------------------------------
+  
     # Best GA configuration from grid search:
     # random initialization, tournament selection, blend crossover,
     # non-uniform mutation, pop_size=100, generations=200,
@@ -123,9 +122,9 @@ def main():
     ga_runtime = time.time() - start_time
     results.append(evaluate_algorithm("GA", ga_solution, ga_runtime))
 
-    # ---------------------------------------------------------------------
+   
     # Particle Swarm Optimization
-    # ---------------------------------------------------------------------
+   
     # Best PSO configuration from grid search:
     # n_particles=100, n_iterations=100, w=0.9, c1=1.0, c2=1.0
 
@@ -146,9 +145,9 @@ def main():
     pso_runtime = time.time() - start_time
     results.append(evaluate_algorithm("PSO", pso_solution, pso_runtime))
 
-    # ---------------------------------------------------------------------
+   
     # Differential Evolution
-    # ---------------------------------------------------------------------
+   
     # Best DE configuration from grid search:
     # pop_size=50, generations=100, F=0.8, CR=0.9
 
@@ -169,9 +168,9 @@ def main():
     de_runtime = time.time() - start_time
     results.append(evaluate_algorithm("DE", de_solution, de_runtime))
 
-    # ---------------------------------------------------------------------
+    
     # Artificial Bee Colony
-    # ---------------------------------------------------------------------
+    
     # Best ABC configuration from grid search:
     # colony_size=100, n_iterations=100, limit=10
 
@@ -191,9 +190,9 @@ def main():
     abc_runtime = time.time() - start_time
     results.append(evaluate_algorithm("ABC", abc_solution, abc_runtime))
 
-    # ---------------------------------------------------------------------
+    
     # Save final results
-    # ---------------------------------------------------------------------
+   
 
     results_df = pd.DataFrame(results)
     results_df = results_df.sort_values(by="f1", ascending=False)
@@ -205,9 +204,9 @@ def main():
 
     
 
-    # ---------------------------------------------------------------------
+    
     # Convergence plot
-    # ---------------------------------------------------------------------
+    
 
     plt.figure(figsize=(10, 6))
 
