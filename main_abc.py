@@ -71,8 +71,8 @@ def main():
     print(f"Recall: {metrics['recall']}")
     print(f"Precision: {metrics['precision']}")
     print(f"F1: {metrics['f1']}")
-    print(f"Predicted positives: {metrics['n_pred_pos']}")
-    print(f"Predicted negatives: {metrics['n_pred_neg']}")
+    print(f"Predicted positives: {metrics['predicted_positive']}")
+    print(f"Predicted negatives: {metrics['predicted_negative']}")
     print(f"Runtime: {runtime:.2f} seconds")
 
     results = pd.DataFrame([{
@@ -86,8 +86,8 @@ def main():
         "recall": metrics["recall"],
         "precision": metrics["precision"],
         "f1": metrics["f1"],
-        "n_pred_pos": metrics["n_pred_pos"],
-        "n_pred_neg": metrics["n_pred_neg"],
+        "n_pred_pos": metrics["predicted_positive"],
+        "n_pred_neg": metrics["predicted_negative"],
         "runtime": runtime,
         "seed": seed
     }])
