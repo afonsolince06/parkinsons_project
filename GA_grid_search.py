@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from my_parkinsons_problem import (
+from parkinsons_problem import (
     compute_n_params,
     fitness_function,
     input_size,
@@ -12,7 +12,7 @@ from my_parkinsons_problem import (
     output_size,
 )
 
-from my_GA import (
+from Genetic_algorithm import (
     genetic_algorithm,
     xavier_initialization,
     random_initialization,

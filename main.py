@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from my_parkinsons_problem import (
+from parkinsons_problem import (
     compute_n_params,
     fitness_function,
     evaluate_solution,
@@ -12,18 +12,18 @@ from my_parkinsons_problem import (
     output_size,
 )
 
-from my_GA import (
+from Genetic_algorithm import (
     genetic_algorithm,
     tournament_selection,
     blend_crossover,
 )
 
-from my_pso import pso
-from my_differential_evolution import differential_evolution
+from pso import pso
+from differential_evolution import differential_evolution
 
-from my_differential_evolution import differential_evolution
+from differential_evolution import differential_evolution
 
-from my_abc_c import artificial_bee_colony
+from abc_c import artificial_bee_colony
 
 
 # Data
@@ -204,7 +204,7 @@ def main():
 
     
 
-    
+
     # Convergence plot
     
 

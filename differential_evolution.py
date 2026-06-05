@@ -2,7 +2,7 @@ import numpy as np
 import random
 import pandas as pd
 import time
-from my_parkinsons_problem import fitness_function, compute_n_params
+from parkinsons_problem import fitness_function, compute_n_params
 def differential_evolution(
     fitness_func,
     n_params,

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-from my_parkinsons_problem import fitness_function, compute_n_params
-from my_pso import pso
+from parkinsons_problem import fitness_function, compute_n_params
+from pso import pso
 import time
 import random
 

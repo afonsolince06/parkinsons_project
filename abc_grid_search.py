@@ -2,8 +2,8 @@ import time
 import pandas as pd
 import random
 
-from my_abc_c import artificial_bee_colony
-from my_parkinsons_problem import (
+from abc_c import artificial_bee_colony
+from parkinsons_problem import (
     evaluate_solution,
     compute_n_params
 )
@@ -39,7 +39,7 @@ def main():
     colony_sizes = [20, 50, 100]
     n_iterations_list = [30, 50, 100]
     limits = [5, 10]
-    n_runs = 3  # número de repetições por configuração
+    n_runs = 3
 
     results = []
 

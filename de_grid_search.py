@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import time
 
-from my_parkinsons_problem import fitness_function, compute_n_params
-from my_differential_evolution import differential_evolution
+from parkinsons_problem import fitness_function, compute_n_params
+from differential_evolution import differential_evolution
 
 df = pd.read_csv("parkinsons_preprocessed.csv")
 X  = df.drop(columns=["status"]).values.astype(float)
