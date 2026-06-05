@@ -17,59 +17,13 @@ def differential_evolution(
     seed=None,
 ):
     """
-    Differential Evolution — DE/rand/1/bin (maximisation variant).
+    Differential Evolution — DE/rand/1/bin (maximisation).
 
-    Implements the canonical DE loop with three operators applied in
-    sequence for every individual in the population each generation:
-
-      Mutation  (rand/1)   mutant  = x_a + F * (x_b − x_c)
-                           where a, b, c are distinct indices ≠ i.
-      Crossover (binomial) trial[j] = mutant[j]  if U(0,1) < CR or j == j_rand
-                                      target[j]  otherwise.
-                           j_rand guarantees at least one gene from the mutant.
-      Selection (greedy)   trial replaces target only when
-                           fitness(trial) ≥ fitness(target).
-
-    The population is initialised uniformly at random within `bounds` and
-    all mutant vectors are clipped back into bounds after mutation.
-
-    Parameters
-    ----------
-    fitness_func : callable
-        Objective function f(individual) → float.
-        The function must accept a 1-D numpy array of length `n_params`.
-    n_params : int
-        Number of dimensions / MLP weight parameters to optimise.
-    pop_size : int
-        Population size.  Must be ≥ 4 (so that three distinct donors
-        a, b, c can always be sampled).  Typical rule of thumb: 10×n_params.
-    generations : int
-        Number of generations (outer loop iterations).
-    bounds : tuple (low, high), optional (default=(-1.0, 1.0))
-        Search-space boundaries applied uniformly to all dimensions.
-        A list of per-dimension tuples [(l1,h1), …, (ln,hn)] is also accepted.
-    F : float
-        Mutation scaling factor, controls the step size of the differential
-        perturbation.  Typical range: [0.4, 1.0].
-    CR : float
-        Crossover rate, probability that a given gene comes from the mutant
-        rather than the target.  Typical range: [0.5, 1.0].
-    maximization : bool, optional (default=True)
-        Direction of optimisation.  True → maximise (e.g. F1, accuracy);
-        False → minimise (e.g. MSE).  Only the maximisation branch is active
-        in this implementation (the minimisation guard is omitted).
-    seed : int or None, optional (default=None)
-        Random seed for both numpy and Python's random module.
-
-    Returns
-    -------
-    best_individual : np.ndarray, shape (n_params,)
-        Weight vector that achieved the highest fitness across all generations.
-    best_fitness : float
-        Fitness value of `best_individual`.
-    history : list of float
-        Best fitness at the end of each generation (length = generations + 1,
-        including the initial evaluation), suitable for convergence plots.
+    Each generation, for every target vector x_i three distinct donors
+    a, b, c are sampled to build a mutant: a + F*(b-c).  A binomial
+    crossover (rate CR, with j_rand guaranteeing at least one mutant gene)
+    produces a trial vector that replaces x_i only if it is at least as fit.
+    All mutant vectors are clipped to bounds before crossover.
     """
 
     if seed is not None:

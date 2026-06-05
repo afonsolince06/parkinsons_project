@@ -17,65 +17,14 @@ def pso(
     seed=None
 ):
     """
-    Particle Swarm Optimisation (PSO) — maximisation variant.
+    Particle Swarm Optimisation (maximisation).
 
-    Each particle maintains a position in the search space and a velocity
-    that is updated every iteration according to three influences:
-
-      Inertia        w  * v(t)                  — keeps the particle moving
-                                                   in its current direction.
-      Cognitive term c1 * r1 * (p_best − x(t))  — attraction toward the
-                                                   particle's own best position.
-      Social term    c2 * r2 * (g_best − x(t))  — attraction toward the
-                                                   swarm's global best position.
-
-    Velocity update:
-        v(t+1) = w * v(t)
-               + c1 * r1 * (p_best − x(t))
-               + c2 * r2 * (g_best − x(t))
-        x(t+1) = x(t) + v(t+1)
-
-    Positions are clipped to [low, high] after each update; velocities are
-    initialised uniformly in [-(high−low), +(high−low)].
-
-    Parameters
-    ----------
-    fitness_func : callable
-        Objective function f(position, *fitness_args) → float.
-        Higher values are treated as better (maximisation).
-    n_particles : int
-        Number of particles in the swarm.
-    n_params : int
-        Dimensionality of the search space (= number of MLP weights).
-    n_iterations : int
-        Number of update cycles to run.
-    fitness_args : tuple, optional
-        Extra positional arguments forwarded to `fitness_func`.
-    w : float
-        Inertia weight — balances global exploration (high w) against local
-        exploitation (low w).  Typical static value: 0.4 – 0.9.
-    c1 : float
-        Cognitive acceleration coefficient.  Scales attraction toward each
-        particle's personal best.  Typical value: 1.5 – 2.0.
-    c2 : float
-        Social acceleration coefficient.  Scales attraction toward the global
-        best.  Typical value: 1.5 – 2.0.
-    low : float, optional (default=-1.0)
-        Lower bound of the search space, applied to every dimension.
-    high : float, optional (default=1.0)
-        Upper bound of the search space, applied to every dimension.
-    seed : int or None, optional (default=None)
-        NumPy random seed for reproducibility.
-
-    Returns
-    -------
-    g_best : np.ndarray, shape (n_params,)
-        Position (weight vector) with the highest fitness found.
-    g_best_fit : float
-        Fitness value of `g_best`.
-    history : list of float
-        Global best fitness recorded at the end of each iteration
-        (length = n_iterations), useful for convergence plots.
+    Velocity update each iteration:
+        v = w*v + c1*r1*(p_best - x) + c2*r2*(g_best - x)
+        x = x + v
+    Inertia w balances exploration vs exploitation; c1 and c2 scale the
+    attraction toward each particle's personal best and the global best.
+    Positions are clipped to [low, high] after every update.
     """
 
     if seed is not None:

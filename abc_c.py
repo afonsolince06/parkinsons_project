@@ -13,52 +13,11 @@ def artificial_bee_colony(
     seed=42
 ):
     """
-    Artificial Bee Colony (ABC) optimiser — maximisation variant.
+    Artificial Bee Colony optimiser (maximisation).
 
-    Implements the standard three-phase ABC loop (Karaboga, 2005):
-      1. Employed-bee phase  — each bee exploits its own food source by
-         perturbing a single random dimension and applies a greedy swap.
-      2. Onlooker-bee phase  — bees are recruited proportionally to
-         fitness (roulette-wheel selection) and repeat the same greedy
-         perturbation, biasing the search toward currently better sources.
-      3. Scout-bee phase     — any source whose trial counter reaches
-         `limit` without improvement is abandoned and replaced by a new
-         source drawn uniformly at random, restoring diversity.
-
-    Parameters
-    ----------
-    fitness_fn : callable
-        Objective function f(solution, *fitness_args) → float.
-        Higher values are considered better (maximisation).
-    n_params : int
-        Dimensionality of each solution vector (= number of MLP weights).
-    fitness_args : tuple, optional
-        Extra positional arguments forwarded to `fitness_fn`.
-    colony_size : int
-        Total number of bees.  Employed bees = colony_size // 2;
-        the same count is used for onlooker bees.
-    n_iterations : int
-        Number of full ABC cycles to execute.
-    limit : int
-        Stagnation threshold.  A food source is abandoned and scouted
-        anew once it has failed to improve for `limit` consecutive trials.
-        Typical values: n_params × colony_size / 2.
-    lower_bound : float, optional (default=-1.0)
-        Lower bound applied uniformly to every dimension.
-    upper_bound : float, optional (default=1.0)
-        Upper bound applied uniformly to every dimension.
-    seed : int, optional (default=42)
-        NumPy random seed for reproducibility.
-
-    Returns
-    -------
-    best_solution : np.ndarray, shape (n_params,)
-        Weight vector with the highest fitness found across all iterations.
-    best_fitness : float
-        Fitness value of `best_solution`.
-    history : list of float
-        Best fitness recorded at the end of each iteration (length =
-        n_iterations), useful for convergence plots.
+    Three-phase loop: employed bees exploit their own source, onlooker bees
+    are recruited proportionally to fitness, and scouts replace stagnant
+    sources (trial counter >= limit) with random new ones.
     """
 
     np.random.seed(seed)
@@ -86,25 +45,10 @@ def artificial_bee_colony(
 
     def generate_neighbour(index):
         """
-        Produce a candidate neighbour of food source `index`.
-
-        A single dimension j is chosen at random and perturbed by a
-        random fraction phi ∈ (-1, 1) of the difference between the
-        current source and a randomly chosen peer k ≠ index:
-
+        Perturb one random dimension j of source[index]:
             neighbour[j] = source[j] + phi * (source[j] - peer[j])
-
-        All dimensions are clipped to [lower_bound, upper_bound].
-
-        Parameters
-        ----------
-        index : int
-            Row index of the food source to be perturbed.
-
-        Returns
-        -------
-        neighbour : np.ndarray, shape (n_params,)
-            The perturbed candidate solution.
+        where peer k != index and phi ~ Uniform(-1, 1).
+        Result is clipped to [lower_bound, upper_bound].
         """
 
         neighbour = population[index].copy()
