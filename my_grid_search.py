@@ -79,7 +79,7 @@ def plot_results(csv_file=RESULTS_FILE):
     print(f"- {PLOT_FILE}")
 
 
-def main():
+def run_ga_grid_search():
     np.random.seed(42)
 
     initializations = [random_initialization, xavier_initialization]
@@ -211,4 +211,4 @@ if __name__ == "__main__":
     if args.plot_only:
         plot_results(RESULTS_FILE)
     else:
-        main()
+        run_ga_grid_search()
