@@ -74,26 +74,10 @@ def evaluate_algorithm(name, solution, runtime):
         output_size=output_size,
     )
 
-<<<<<<< HEAD
-de_solution, de_fitness, de_history = differential_evolution(
-    fitness_func  = fitness_fn,
-    n_params      = n_params,
-    pop_size      = 50,
-    generations   = 100,
-    bounds        = (-1.0, 1.0),
-    F             = 0.8,
-    CR            = 0.9,
-    maximization  = True,
-    seed          = 42
-)
 
-# ── results ───────────────────────────────────────────────────────────────────
-ga_metrics  = evaluate_solution(ga_solution,  X, y, input_size, hidden_sizes, output_size)
-pso_metrics = evaluate_solution(pso_solution, X, y, input_size, hidden_sizes, output_size)
-de_metrics  = evaluate_solution(de_solution,  X, y, input_size, hidden_sizes, output_size)
-=======
+
     print_metrics(name, metrics, runtime)
->>>>>>> 1989c3059781552c3143898e937f4cb38cb62a67
+   
 
     return {
         "algorithm": name,
@@ -107,24 +91,7 @@ de_metrics  = evaluate_solution(de_solution,  X, y, input_size, hidden_sizes, ou
     }
 
 
-<<<<<<< HEAD
-print("\n=== DE ===")
-for k, v in de_metrics.items():
-    print(f"  {k}: {v:.4f}" if isinstance(v, float) else f"  {k}: {v}")
 
-# ── convergence plot ──────────────────────────────────────────────────────────
-plt.figure(figsize=(9, 5))
-plt.plot(ga_history,  label="GA",  linewidth=1.5)
-plt.plot(pso_history, label="PSO", linewidth=1.5)
-plt.plot(de_history, label="DE", linewidth=1.5)
-plt.xlabel("Generation / Iteration")
-plt.ylabel("Best F1-score")
-plt.title("Convergence – GA vs PSO vs DE")
-plt.legend()
-plt.tight_layout()
-plt.savefig("convergence.png", dpi=150)
-plt.show()
-=======
 def main():
     results = []
 
@@ -233,11 +200,10 @@ def main():
 
     results_df.to_csv("final_algorithm_comparison.csv", index=False)
 
-    print("\n=== Final comparison ===")
+    print("\n Final comparison ")
     print(results_df)
 
-    print("\nSaved file:")
-    print("- final_algorithm_comparison.csv")
+    
 
     # ---------------------------------------------------------------------
     # Convergence plot
@@ -259,10 +225,9 @@ def main():
     plt.savefig("final_convergence_comparison.png", dpi=300, bbox_inches="tight")
     plt.show()
 
-    print("\nSaved plot:")
-    print("- final_convergence_comparison.png")
+   
 
 
 if __name__ == "__main__":
     main()
->>>>>>> 1989c3059781552c3143898e937f4cb38cb62a67
+
