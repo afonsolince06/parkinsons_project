@@ -28,55 +28,9 @@ from my_GA import (
 
 
 RESULTS_FILE = "ga_gridsearch_results.csv"
-PLOT_FILE = "ga_gridsearch_plot.png"
 
 
-def plot_results(csv_file=RESULTS_FILE):
-    results_df = pd.read_csv(csv_file)
-    results_df = results_df.sort_values(by="mean_fitness", ascending=False)
 
-    top5 = results_df.head(5)
-
-    labels = []
-    for _, row in top5.iterrows():
-        label = (
-            f"init={row['initialization'].replace('_initialization', '')} "
-            f"sel={row['selection'].replace('_selection', '')} "
-            f"cx={row['crossover'].replace('_crossover', '')} "
-            f"mut={row['mutation'].replace('_mutation', '')} "
-            f"mr={row['mutation_rate']}"
-        )
-        labels.append(label)
-
-    plt.figure(figsize=(12, 6))
-    bars = plt.barh(labels, top5["mean_fitness"])
-
-    plt.xlabel("Mean fitness")
-    plt.title("GA Grid Search — Top configurations ranked by mean fitness")
-
-    plt.xlim(
-        top5["mean_fitness"].min() - 0.01,
-        top5["mean_fitness"].max() + 0.01,
-    )
-
-    plt.gca().invert_yaxis()
-
-    for bar in bars:
-        plt.text(
-            bar.get_width(),
-            bar.get_y() + bar.get_height() / 2,
-            f"{bar.get_width():.4f}",
-            va="center",
-            ha="left",
-            fontsize=9,
-        )
-
-    plt.tight_layout()
-    plt.savefig(PLOT_FILE, dpi=300, bbox_inches="tight")
-    plt.show()
-
-    print("\nSaved plot:")
-    print(f"- {PLOT_FILE}")
 
 
 def main():
@@ -195,20 +149,8 @@ def main():
     print("\nSaved file:")
     print(f"- {RESULTS_FILE}")
 
-    plot_results(RESULTS_FILE)
+    
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--plot-only",
-        action="store_true",
-        help="Generate only the plot from the existing CSV file.",
-    )
-
-    args = parser.parse_args()
-
-    if args.plot_only:
-        plot_results(RESULTS_FILE)
-    else:
-        main()
+    main()
