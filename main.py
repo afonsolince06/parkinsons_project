@@ -42,6 +42,21 @@ n_params = compute_n_params(
 
 
 def fitness_fn(solution):
+    """
+    Thin wrapper that binds the global dataset (X, y) and MLP architecture
+    constants to `fitness_function`, so that every optimiser only needs to
+    pass a single weight vector.
+
+    Parameters
+    ----------
+    solution : array-like, shape (n_params,)
+        Flat vector of MLP weights and biases to evaluate.
+
+    Returns
+    -------
+    float
+        F1-score of the MLP parameterised by `solution` on the full dataset.
+    """
     return fitness_function(
         solution,
         X,
@@ -53,6 +68,19 @@ def fitness_fn(solution):
 
 
 def print_metrics(name, metrics, runtime):
+    """
+    Pretty-print a dictionary of classification metrics to stdout.
+
+    Parameters
+    ----------
+    name : str
+        Algorithm label shown in the header line (e.g. "GA", "PSO").
+    metrics : dict
+        Dictionary with keys: 'accuracy', 'recall', 'precision', 'f1',
+        'predicted_positive', 'predicted_negative'.
+    runtime : float
+        Wall-clock time in seconds taken by the optimisation run.
+    """
     print(f"\n=== {name} ===")
     print(f"Accuracy: {metrics['accuracy']:.4f}")
     print(f"Recall: {metrics['recall']:.4f}")
@@ -64,6 +92,29 @@ def print_metrics(name, metrics, runtime):
 
 
 def evaluate_algorithm(name, solution, runtime):
+    """
+    Evaluate a candidate solution, print its metrics, and return a results row.
+
+    Calls `evaluate_solution` from `parkinsons_problem` to compute all
+    classification metrics on the full dataset, then delegates pretty-printing
+    to `print_metrics`.
+
+    Parameters
+    ----------
+    name : str
+        Human-readable algorithm label (e.g. "DE", "ABC").
+    solution : array-like, shape (n_params,)
+        Best weight vector found by the optimiser.
+    runtime : float
+        Wall-clock optimisation time in seconds.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys: 'algorithm', 'accuracy', 'recall', 'precision',
+        'f1', 'predicted_positive', 'predicted_negative', 'runtime'.
+        Intended to be appended to a list and converted to a DataFrame.
+    """
     metrics = evaluate_solution(
         solution,
         X,
@@ -73,10 +124,7 @@ def evaluate_algorithm(name, solution, runtime):
         output_size=output_size,
     )
 
-
-
     print_metrics(name, metrics, runtime)
-   
 
     return {
         "algorithm": name,
@@ -90,8 +138,21 @@ def evaluate_algorithm(name, solution, runtime):
     }
 
 
-
 def main():
+    """
+    Entry point: run GA, PSO, DE and ABC with their best grid-search
+    configurations, collect results, save a comparison CSV, and plot
+    convergence curves.
+
+    Workflow
+    --------
+    1. Run each optimiser with its best hyperparameters (determined by the
+       prior grid search documented in grid_search_results.csv).
+    2. Evaluate the best solution found by each algorithm on the full dataset.
+    3. Persist all results to 'final_algorithm_comparison.csv' sorted by F1.
+    4. Save a convergence plot ('final_convergence_comparison.png') showing
+       best fitness vs. generation / iteration for all four algorithms.
+    """
     results = []
 
     
@@ -229,4 +290,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
